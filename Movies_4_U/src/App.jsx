@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import reactLogo from './assets/react.svg'
 import './App.css'
 import Search from './components/Search'
 const API_BASE_URL = 'https://api.themoviedb.org/3';
@@ -14,17 +13,36 @@ const API_OPTIONS = {
 function App () {
   const [searchTerm, setSearchTerm] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const [moviesList,setMoviesList] = useState([]);
+  const [isLoading,setIsLoading] = useState(false);
+
   const fetchMovies = async() =>{
+    setIsLoading(true);
+    setErrorMessage('');
+
     try {
-      
+      const endpoint = `${API_BASE_URL}/search/movie?sort_by=popularity.desc`;
+      const response = await fetch(endpoint, API_OPTIONS);
+      if (!response.ok) {
+        throw new Error("Failed fetching Data");
+      }
+      const data = await response.json();
+      if (data.Response === 'false') {
+        setErrorMessage (data.Error || 'failed to fetch movies');
+        setMoviesList([]);
+        return;
+      }
+      setMoviesList(data.results || []);
     } catch (error) {
       console.error(`Error fetching movies : ${error}`)
       setErrorMessage('Error fetching movies, Please try agian later.')
+    }finally{
+      setIsLoading(false);
     }
   };
 
   useEffect(()=>{
-
+    fetchMovies();
   },[])
 return (
 <div>
@@ -39,10 +57,20 @@ return (
   </header>
   <section className="all-movies">
     <h2>All Movies</h2>
-    {errorMessage && <p className='text-red-500'>{errorMessage}</p>}
+    {isLoading ? (
+      <p className='text-white'>Loading...</p>
+    ):errorMessage ? (
+      <p className='text-red-500'>{errorMessage}</p>
+    ):(
+      <ul>
+        {moviesList.map((movie) => (
+          <p key={movie.id} className="text-white">{movie.title}</p>
+        ))}
+      </ul>
+    )}
   </section>
   <div>
-    
+
   </div>
   
     
